@@ -392,6 +392,7 @@ class MainWindow(QMainWindow):
         
         if not playtest:
             action = menu.addAction("&Open...", self.load_file, QKeySequence.Open)
+            action = menu.addAction("Open from &Web page...", self.open_from_web_page, QKeySequence('Ctrl+W'))
             menu.addSeparator()
             action = menu.addAction("&Paste from Clipboard", self.paste, QKeySequence('Ctrl+V'))
             menu.addSeparator()
@@ -517,6 +518,15 @@ class MainWindow(QMainWindow):
         if isinstance(fn, basestring):
             self.current_file = fn
             self.last_used_folder = os.path.dirname(fn)
+        return True
+    
+    def open_from_web_page(self):
+        import webpage
+        dialog = webpage.Dialog(self)
+        if dialog.exec_() == qt.widgets.QDialog.Rejected:
+            return
+        self.load_hexcells_file(dialog.selected_level_file)
+        self._prepare()
         return True
     
     def _prepare(self):

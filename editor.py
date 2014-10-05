@@ -552,6 +552,8 @@ class MainWindow(QMainWindow):
         action.setStatusTip("Close the current level and start with an empty one.")
         action = menu.addAction("&Open...", self.load_file, QKeySequence.Open)
         action.setStatusTip("Close the current level and load one from a file.")
+        action = menu.addAction("Open from &Web page...", self.open_from_web_page, QKeySequence('Ctrl+W'))
+        action.setStatusTip("Close the current level and load one from a web page.")
         action = menu.addAction("&Save", lambda: self.save_file(self.current_file), QKeySequence.Save)
         action.setStatusTip("Save the level, overwriting the current file.")
         action = menu.addAction("Save &As...", self.save_file, QKeySequence('Ctrl+Shift+S'))
@@ -822,6 +824,27 @@ class MainWindow(QMainWindow):
         if isinstance(fn, basestring):
             self.current_file = fn
             self.last_used_folder = os.path.dirname(fn)
+        self.no_changes()
+        self.status = "Done", 1
+        return True
+    
+    def open_from_web_page(self):
+        import webpage
+        dialog = webpage.Dialog(self)
+        if dialog.exec_() == QDialog.Rejected:
+            return
+        if not self.close_file():
+            return
+        self.status = "Loading a level from web page..."
+        try:
+            load_hexcells(dialog.selected_level_file, self.scene, Cell=Cell, Column=Column)
+        except ValueError as e:
+            QMessageBox.critical(None, "Error", str(e))
+            self.status = "Failed", 1
+            return
+        for it in self.scene.all(Column):
+            it.cell = min(it.members, key=lambda m: (m.pos()-it.pos()).manhattanLength())
+        self.view.fitInView(self.scene.itemsBoundingRect().adjusted(-0.5, -0.5, 0.5, 0.5), qt.KeepAspectRatio)
         self.no_changes()
         self.status = "Done", 1
         return True
